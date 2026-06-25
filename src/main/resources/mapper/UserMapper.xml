@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.myproject.mapper.UserMapper">
+
+    <!-- 调用存储过程查询用户 -->
+    <select id="list" statementType="CALLABLE" resultMap="BaseResultMap">
+        {call sp_search_user(
+                #{username, mode=IN, jdbcType=VARCHAR},
+                #{realName, mode=IN, jdbcType=VARCHAR},
+                #{userType, mode=IN, jdbcType=VARCHAR},
+                #{status, mode=IN, jdbcType=INTEGER}
+              )}
+    </select>
+
+</mapper>

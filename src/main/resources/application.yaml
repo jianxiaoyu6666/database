@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: train_ticket_management
+
+  datasource:
+    password: 123456
+    username: root
+    url: jdbc:mysql://localhost:3306/train_ticket_db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  mybatis:
+    configuration:
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+      #开启驼峰命名映射开关
+      map-underscore-to-camel-case: true

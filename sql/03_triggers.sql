@@ -5,7 +5,7 @@
 -- 重要说明: MySQL分区表不支持FOREIGN KEY约束
 -- 因此通过触发器来补偿引用完整性和级联操作:
 --   - trg_schedule_cancel_cleanup: 排班取消时级联取消订单 (替代ON DELETE CASCADE)
---   - trg_order_item_release_seat: 退票时自动释放库存 (替代ON DELETE CASCADE)
+--   - trg_order_release_seat: 退票时自动释放库存 (替代ON DELETE CASCADE)
 --   - trg_schedule_init_inventory: 排班创建时初始化库存 (保证数据一致性)
 -- ============================================
 
@@ -81,7 +81,6 @@ END //
 
 -- ============================================
 -- 4. 退票/取消时自动释放座位库存触发器
--- 简化后: 直接监控 ticket_order.ticket_status
 -- ============================================
 CREATE TRIGGER trg_order_release_seat
 AFTER UPDATE ON `ticket_order` FOR EACH ROW

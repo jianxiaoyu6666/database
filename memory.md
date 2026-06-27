@@ -21,8 +21,8 @@
 | 索引优化 | ✅ | ✅ | 各表索引设计完成 |
 | 全文检索 | ⚠️ | ❌ | station表有FULLTEXT索引，Java未调用 |
 | 分区表 | ⚠️ | ❌ | 4表按月分区DDL完成，缺Java实体 |
-| 审计日志 | ⚠️ | ❌ | audit_log表+实体已有，代码未写 |
-| 触发器 | ❌ | ❌ | |
+| 审计日志 | ⚠️ | 🔄 | AOP+触发器架构，INSERT已完成，UPDATE/DELETE待做 |
+| 触发器 | 🔄 | 🔄 | user表INSERT触发器已完成，待UPDATE/DELETE |
 | 视图 | ❌ | ❌ | |
 | 事务并发控制 | ❌ | ❌ | |
 | 窗口函数 | ❌ | ❌ | |
@@ -55,6 +55,10 @@
 ```
 src/main/java/com/myproject/
 ├── TrainTicketManagementApplication.java  ← 入口（含@ServletComponentScan）
+├── annotation/
+│   └── Log.java          ← 🆕 @Log注解，标记需审计方法
+├── AOP/
+│   └── LogAspect.java    ← 🆕 切面，SET @audit_operator
 ├── controller/
 │   ├── loginController.java
 │   ├── RegisterController.java
@@ -71,12 +75,13 @@ src/main/java/com/myproject/
 ├── filter/
 │   └── TokenFilter.java
 ├── mapper/
-│   └── UserMapper.java
+│   ├── UserMapper.java
+│   └── LogMapper.java     ← 🆕 审计日志（SET变量+查询）
 ├── service/
 │   ├── UserService.java
 │   └── impl/UserServiceImpl.java
 └── util/
-    ├── AESUtil.java     ← 修复后的AES工具
+    ├── AESUtil.java
     ├── CurreetHolder.java
     └── JwtUtil.java
 ```
@@ -106,6 +111,51 @@ src/main/java/com/myproject/
 - AES/JWT密钥不要改，全队保持一致
 - Lombok 插件必须装
 - 社区版 IDEA 完全够用，不花钱
+
+## SQL文件结构（2026-06-28 重构）
+
+```
+sql/
+├── schema/
+│   └── 01_schema.sql
+├── procedures/
+│   └── 02_procedures.sql
+├── triggers/
+│   └── user_triggers.sql    ← INSERT已实现，UPDATE/DELETE待补
+└── seed/                     ← 预留：测试数据
+```
+
+## 开发日志
+
+### 2026-06-28 — 审计日志 AOP+触发器 双层架构 (老大)
+
+**架构决策:**
+- AOP负责传递操作人身份 → `CurreetHolder` → MySQL会话变量 `@audit_operator`
+- 触发器负责捕获OLD/NEW数据快照，拼JSON写入 `audit_log`
+- 两个高阶技术联动：审计日志 + 触发器，答辩时可做亮点
+
+**已完成:**
+- `@Log` 注解 (annotation/Log.java) — 标记需要审计的方法
+- `LogAspect` 切面 (AOP/LogAspect.java) — `@Around` 拦截，SET会话变量
+- `LogMapper` (mapper/LogMapper.java + XML) — SET变量 + 动态查询
+- user表 INSERT 触发器 (sql/triggers/user_triggers.sql)
+  - `AFTER INSERT` → 用 `NEW.xxx` 拼 JSON → 写入 audit_log
+  - `operated_by` 用 `NEW.id`（注册即操作人本人）
+- `UserServiceImpl.register()` 添加 `@Log(TableName="user", operationType=INSERT)`
+- 测试类 `testTriggerInsert.java` 验证通过 ✅
+
+**踩坑记录:**
+- 测试类身份证号 `11111111111110000X` 年份段"11"不匹配正则 → 校验失败 → INSERT未执行 → 触发器不触发
+- 触发器的 `DELIMITER` 拼写错误 `delimiter` → 必须是 `DELIMITER`
+- Spring Boot Test 直接调 Service，不走 HTTP/TokenFilter → CurreetHolder 为 null
+
+**待完成:**
+- user表 UPDATE/DELETE 触发器
+- `UserServiceImpl` update/setStatus/delete 添加 @Log 注解
+- AuditLogController 查询接口
+
+### 2026-06-25 — AES加密修复 (前人修)
+- 见"已修复的问题"章节
 
 ## Git协作
 

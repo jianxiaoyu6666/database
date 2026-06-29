@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火车售票管理系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            color: #172033;
+            background: #f4f7fb;
+        }
+
+        header {
+            padding: 22px 32px;
+            color: #fff;
+            background: #1554a3;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            opacity: .86;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            width: min(1180px, calc(100% - 32px));
+            margin: 24px auto;
+        }
+
+        section {
+            background: #fff;
+            border: 1px solid #dce4ef;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            font-size: 14px;
+            color: #526070;
+        }
+
+        input, select, button {
+            width: 100%;
+            min-height: 38px;
+            border-radius: 6px;
+            font: inherit;
+        }
+
+        input, select {
+            border: 1px solid #c8d3df;
+            padding: 8px 10px;
+            background: #fff;
+        }
+
+        button {
+            margin-top: 14px;
+            border: 0;
+            color: #fff;
+            background: #1554a3;
+            cursor: pointer;
+        }
+
+        button.secondary {
+            color: #1554a3;
+            background: #eaf2ff;
+        }
+
+        button.danger {
+            background: #b42318;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .tabs button {
+            width: auto;
+            margin: 0;
+            padding: 0 16px;
+            color: #1554a3;
+            background: #eaf2ff;
+        }
+
+        .tabs button.active {
+            color: #fff;
+            background: #1554a3;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .metric {
+            padding: 14px;
+            border: 1px solid #dce4ef;
+            border-radius: 8px;
+            background: #f8fbff;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 16px;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e5ebf2;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #526070;
+            background: #f8fbff;
+        }
+
+        .message {
+            min-height: 22px;
+            margin-top: 14px;
+            color: #1554a3;
+            word-break: break-word;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 840px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>火车售票管理系统</h1>
+    <p>前端实现：登录注册、窗口函数统计、数据库备份与恢复</p>
+</header>
+
+<main>
+    <section>
+        <h2>账号</h2>
+        <div class="tabs">
+            <button class="active" data-auth-tab="login">登录</button>
+            <button data-auth-tab="register">注册</button>
+        </div>
+
+        <form id="loginForm">
+            <label>用户名</label>
+            <input name="username" value="admin" autocomplete="username">
+            <label>密码</label>
+            <input name="password" type="password" value="123456" autocomplete="current-password">
+            <button type="submit">登录</button>
+        </form>
+
+        <form id="registerForm" class="hidden">
+            <label>用户名</label>
+            <input name="username" required>
+            <label>密码</label>
+            <input name="password" type="password" required>
+            <label>真实姓名</label>
+            <input name="realName" required>
+            <label>身份证号</label>
+            <input name="idNumber" required>
+            <label>手机号</label>
+            <input name="phone" required>
+            <label>用户类型</label>
+            <select name="userType">
+                <option value="USER">普通用户</option>
+                <option value="STAFF">工作人员</option>
+                <option value="ADMIN">管理员</option>
+            </select>
+            <button type="submit">注册</button>
+        </form>
+
+        <button class="secondary" id="logoutButton" type="button">退出登录</button>
+        <div class="message" id="authMessage"></div>
+    </section>
+
+    <section>
+        <div class="tabs">
+            <button class="active" data-panel-tab="stats">窗口函数统计</button>
+            <button data-panel-tab="backup">备份恢复</button>
+        </div>
+
+        <div id="statsPanel">
+            <h2>业务统计</h2>
+            <div class="grid">
+                <div class="metric">登录用户<strong id="currentUser">未登录</strong></div>
+                <div class="metric">接口状态<strong id="apiState">待请求</strong></div>
+                <div class="metric">展示条数<strong id="rowCount">0</strong></div>
+            </div>
+            <div class="grid">
+                <button type="button" data-stat="route">热门线路排行</button>
+                <button type="button" data-stat="user">用户消费排行</button>
+                <button type="button" data-stat="trend">车次售票趋势</button>
+            </div>
+            <table id="statsTable"></table>
+        </div>
+
+        <div id="backupPanel" class="hidden">
+            <h2>数据库备份恢复</h2>
+            <div class="grid">
+                <button type="button" id="createBackup">创建全量备份</button>
+                <button type="button" id="loadBackups">刷新备份列表</button>
+                <button type="button" class="danger" id="restoreBackup">恢复选中备份</button>
+            </div>
+            <label>备份文件</label>
+            <select id="backupSelect"></select>
+            <table id="backupTable"></table>
+        </div>
+
+        <div class="message" id="mainMessage"></div>
+    </section>
+</main>
+
+<script>
+    const state = {
+        token: localStorage.getItem("token") || "",
+        username: localStorage.getItem("username") || ""
+    };
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function setMessage(target, text, ok = true) {
+        target.textContent = text;
+        target.style.color = ok ? "#1554a3" : "#b42318";
+    }
+
+    function updateUser() {
+        $("#currentUser").textContent = state.username || "未登录";
+    }
+
+    async function request(path, options = {}) {
+        const headers = {"Content-Type": "application/json", ...(options.headers || {})};
+        if (state.token) {
+            headers.token = state.token;
+        }
+        const response = await fetch(path, {...options, headers});
+        if (response.status === 401) {
+            throw new Error("登录已失效或接口需要登录");
+        }
+        const result = await response.json();
+        if (result.code !== 1) {
+            throw new Error(result.msg || "请求失败");
+        }
+        return result.data;
+    }
+
+    function formJson(form) {
+        return Object.fromEntries(new FormData(form).entries());
+    }
+
+    function renderTable(table, rows) {
+        if (!rows || rows.length === 0) {
+            table.innerHTML = "<tbody><tr><td>暂无数据</td></tr></tbody>";
+            $("#rowCount").textContent = "0";
+            return;
+        }
+        const columns = Object.keys(rows[0]);
+        table.innerHTML = `
+            <thead><tr>${columns.map(column => `<th>${column}</th>`).join("")}</tr></thead>
+            <tbody>${rows.map(row => `<tr>${columns.map(column => `<td>${row[column] ?? ""}</td>`).join("")}</tr>`).join("")}</tbody>
+        `;
+        $("#rowCount").textContent = rows.length;
+    }
+
+    async function loadStatistic(type) {
+        const paths = {
+            route: "/api/statistics/window/route-ranking?limit=10",
+            user: "/api/statistics/window/user-ranking?limit=10",
+            trend: "/api/statistics/window/train-trend?days=30"
+        };
+        try {
+            $("#apiState").textContent = "请求中";
+            const rows = await request(paths[type]);
+            renderTable($("#statsTable"), rows);
+            $("#apiState").textContent = "正常";
+            setMessage($("#mainMessage"), "统计数据加载完成");
+        } catch (error) {
+            $("#apiState").textContent = "失败";
+            setMessage($("#mainMessage"), error.message, false);
+        }
+    }
+
+    async function loadBackups() {
+        const backups = await request("/api/admin/backups");
+        const select = $("#backupSelect");
+        select.innerHTML = backups.map(item => `<option value="${item.fileName}">${item.fileName}</option>`).join("");
+        renderTable($("#backupTable"), backups);
+        setMessage($("#mainMessage"), "备份列表已刷新");
+    }
+
+    $$("[data-auth-tab]").forEach(button => {
+        button.addEventListener("click", () => {
+            $$("[data-auth-tab]").forEach(item => item.classList.remove("active"));
+            button.classList.add("active");
+            $("#loginForm").classList.toggle("hidden", button.dataset.authTab !== "login");
+            $("#registerForm").classList.toggle("hidden", button.dataset.authTab !== "register");
+        });
+    });
+
+    $$("[data-panel-tab]").forEach(button => {
+        button.addEventListener("click", () => {
+            $$("[data-panel-tab]").forEach(item => item.classList.remove("active"));
+            button.classList.add("active");
+            $("#statsPanel").classList.toggle("hidden", button.dataset.panelTab !== "stats");
+            $("#backupPanel").classList.toggle("hidden", button.dataset.panelTab !== "backup");
+        });
+    });
+
+    $("#loginForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+            const data = await request("/login", {method: "POST", body: JSON.stringify(formJson(event.target))});
+            state.token = data.token;
+            state.username = data.username;
+            localStorage.setItem("token", state.token);
+            localStorage.setItem("username", state.username);
+            updateUser();
+            setMessage($("#authMessage"), "登录成功");
+        } catch (error) {
+            setMessage($("#authMessage"), error.message, false);
+        }
+    });
+
+    $("#registerForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+            await request("/register", {method: "POST", body: JSON.stringify(formJson(event.target))});
+            setMessage($("#authMessage"), "注册成功，可以登录");
+        } catch (error) {
+            setMessage($("#authMessage"), error.message, false);
+        }
+    });
+
+    $("#logoutButton").addEventListener("click", () => {
+        state.token = "";
+        state.username = "";
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        updateUser();
+        setMessage($("#authMessage"), "已退出登录");
+    });
+
+    $$("[data-stat]").forEach(button => {
+        button.addEventListener("click", () => loadStatistic(button.dataset.stat));
+    });
+
+    $("#createBackup").addEventListener("click", async () => {
+        try {
+            await request("/api/admin/backups", {method: "POST", body: JSON.stringify({includeDelete: true})});
+            await loadBackups();
+        } catch (error) {
+            setMessage($("#mainMessage"), error.message, false);
+        }
+    });
+
+    $("#loadBackups").addEventListener("click", () => {
+        loadBackups().catch(error => setMessage($("#mainMessage"), error.message, false));
+    });
+
+    $("#restoreBackup").addEventListener("click", async () => {
+        const fileName = $("#backupSelect").value;
+        if (!fileName || !confirm(`确认恢复 ${fileName}？`)) {
+            return;
+        }
+        try {
+            const message = await request(`/api/admin/backups/${encodeURIComponent(fileName)}/restore`, {method: "POST"});
+            setMessage($("#mainMessage"), message);
+        } catch (error) {
+            setMessage($("#mainMessage"), error.message, false);
+        }
+    });
+
+    updateUser();
+</script>
+</body>
+</html>

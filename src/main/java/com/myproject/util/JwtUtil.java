@@ -23,6 +23,6 @@ public class JwtUtil {
 
     //解析令牌
     public static Claims parseJwt(String Jwt){
-        return Jwts.parser().setSigningKey(key).parseClaimsJwt(Jwt).getBody();
+        return Jwts.parser().setSigningKey(key).parseClaimsJws(Jwt).getBody();
     }
 }

@@ -16,10 +16,10 @@ public class testTriggerInsert {
     @Test
     void func(){
         User u = new User();
-        u.setUsername("mkl1");
+        u.setUsername("mkl2");
         u.setPassword("111");
         u.setRealName("模块");
-        u.setIdNumber("11010119900101002X");
+        u.setIdNumber("11010119900101003X");
         u.setPhone("11111111113");
         u.setUserType("USER");
         userService.register(u);

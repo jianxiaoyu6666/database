@@ -39,7 +39,8 @@ public class TokenFilter implements Filter {
         //5.如果存在，校验令牌，校验失败则返回401
         try{
             Claims claims = JwtUtil.parseJwt(token);
-            Long id = (Long) claims.get("id");
+            //Long id = (Long) claims.get("id");
+            Long id = ((Number) claims.get("id")).longValue();
             String userType = (String)claims.get("userType");
             CurreetHolder.setCurrentId(id);
             CurreetHolder.setCurrentUsertype(userType);
@@ -47,7 +48,7 @@ public class TokenFilter implements Filter {
 
         }
         catch (Exception e){
-            log.info("令牌非法,401");
+            log.info("令牌非法,401",e);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

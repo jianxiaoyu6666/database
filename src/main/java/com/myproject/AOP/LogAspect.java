@@ -30,7 +30,6 @@ public class LogAspect {
     public Object audit(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         Long operatorId = CurreetHolder.getCurrentId();
         if(CurreetHolder.getCurrentId() != null){
-            //这里该怎么写？
             logMapper.setAuditOperator(operatorId);
         }
         return proceedingJoinPoint.proceed();

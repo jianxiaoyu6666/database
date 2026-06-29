@@ -94,6 +94,7 @@ public class UserServiceImpl implements UserService {
         return Result.success("注册成功");
     }
 
+    @Log(TableName = "user", operationType = OperationType.UPDATE)
     @Override
     public void update(String username, String password, String phone, String email) {
         if(username == null || username.isEmpty()){
@@ -140,6 +141,7 @@ public class UserServiceImpl implements UserService {
                 user.getStatus());
     }
 
+    @Log(TableName = "user", operationType = OperationType.DELETE)
     @Override
     public void delete(Long id) {
         userMapper.deleteByID(id);

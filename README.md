@@ -51,7 +51,7 @@ spring:
 
 ## 第四步：执行存储过程
 
-`src/main/resources/static/用户查询.sql` 需要在 MySQL 里执行一次，创建 `sp_search_user` 存储过程。  
+`src/main/resources/static/sp_search_user.sql` 需要在 MySQL 里执行一次，创建 `sp_search_user` 存储过程。  
 在 IDEA 里打开这个文件，连上数据库，全选执行即可。
 
 ---

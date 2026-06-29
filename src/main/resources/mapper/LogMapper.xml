@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.myproject.mapper.LogMapper">
+
+    <select id="list" resultType="com.myproject.entity.audit_log">
+        SELECT id, table_name, operation_type, record_id,
+        old_value, new_value, operated_by, operated_at, log_date
+        FROM audit_log
+        WHERE 1=1
+        <if test="tableName != null and tableName != ''">
+            AND table_name = #{tableName}
+        </if>
+        <if test="operationType != null and operationType != ''">
+            AND operation_type = #{operationType}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND log_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND log_date &lt;= #{endDate}
+        </if>
+        <if test="operatedBy != null">
+            AND operated_by = #{operatedBy}
+        </if>
+        ORDER BY operated_at DESC
+    </select>
+
+</mapper>

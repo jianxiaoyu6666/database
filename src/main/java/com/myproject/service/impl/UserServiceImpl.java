@@ -1,5 +1,7 @@
 package com.myproject.service.impl;
 
+import com.myproject.annotation.Log;
+import com.myproject.entity.OperationType;
 import com.myproject.entity.Result;
 import com.myproject.entity.User;
 import com.myproject.entity.logInfo;
@@ -62,6 +64,7 @@ public class UserServiceImpl implements UserService {
         return new logInfo(u.getId(),u.getUsername(),token);
     }
 
+    @Log(TableName = "user", operationType = OperationType.INSERT)
     @Override
     public Result register(User user) {
         //基础检验，应该这样就可以了，没必要再继续写更加复杂的检验了

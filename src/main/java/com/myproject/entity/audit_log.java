@@ -19,11 +19,11 @@ public class audit_log {
     private Long id;
     private String tableName;
     private OperationType operationType;
-    private Long recordId;
+    private Long recordId;              //
     private String oldValue;
     private String newValue;
-    private Long operatedBy;
-    private LocalDateTime operatedAt;
-    private LocalDate logDate;
+    private Long operatedBy;            //操作人ID
+    private LocalDateTime operatedAt;   //操作时间
+    private LocalDate logDate;          //
 }
 

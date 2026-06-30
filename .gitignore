@@ -27,3 +27,9 @@ memory.md
 backups/
 
 token.txt
+
+*.ipr
+*.iws
+*.iml
+.idea/
+sql/tempfile_*

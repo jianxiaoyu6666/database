@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.myproject.mapper.TrainMapper">
+
+    <!-- 查车次 -->
+    <select id="findByInfo" statementType="CALLABLE" resultType="com.myproject.entity.TrainSearchInfo">
+        {call sp_search_trains(
+                #{fromStationId, mode=IN, jdbcType=BIGINT},
+                #{toStationId, mode=IN, jdbcType=BIGINT},
+                #{date, mode=IN, jdbcType=DATE},
+                #{trainType, mode=IN, jdbcType=VARCHAR}
+              )}
+    </select>
+
+    <!-- 查可用座位 -->
+    <select id="findAvailableSeats" statementType="CALLABLE" resultType="com.myproject.entity.SeatInfo">
+        {call sp_find_available_seats(
+                #{scheduleId, mode=IN, jdbcType=BIGINT},
+                #{fromStationId, mode=IN, jdbcType=BIGINT},
+                #{toStationId, mode=IN, jdbcType=BIGINT}
+              )}
+    </select>
+
+</mapper>

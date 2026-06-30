@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.myproject.mapper.TicketMapper">
+
+    <!--
+        调用购票存储过程
+        IN:  userId, scheduleId, passengerName, passengerIdNumber(已加密),
+             carriageId, seatId, fromStationId, toStationId,
+             ticketPrice, seatType
+        OUT: resultCode (0成功), resultMsg, orderId
+    -->
+    <select id="bookTicket" statementType="CALLABLE" parameterType="map">
+        {call sp_book_ticket(
+            #{userId,               mode=IN,  jdbcType=BIGINT},
+            #{scheduleId,           mode=IN,  jdbcType=BIGINT},
+            #{passengerName,        mode=IN,  jdbcType=VARCHAR},
+            #{passengerIdNumber,    mode=IN,  jdbcType=VARCHAR},
+            #{carriageId,           mode=IN,  jdbcType=BIGINT},
+            #{seatId,               mode=IN,  jdbcType=BIGINT},
+            #{fromStationId,        mode=IN,  jdbcType=BIGINT},
+            #{toStationId,          mode=IN,  jdbcType=BIGINT},
+            #{ticketPrice,          mode=IN,  jdbcType=DECIMAL},
+            #{seatType,             mode=IN,  jdbcType=VARCHAR},
+            #{scheduleDate,         mode=IN,  jdbcType=DATE},
+            --传进来的Map在这个调用存储过程的时候被自动插入返回值的键值对了，具体是因为下面三条代码可以自动写回Map
+            #{resultCode,           mode=OUT, jdbcType=INTEGER},
+            #{resultMsg,            mode=OUT, jdbcType=VARCHAR},
+            #{orderId,              mode=OUT, jdbcType=BIGINT}
+        )}
+    </select>
+
+</mapper>

@@ -1,66 +1,59 @@
 package com.myproject.service.impl;
 
-import com.myproject.entity.Order;
-import com.myproject.entity.Train;
-import com.myproject.mapper.OrderMapper;
-import com.myproject.mapper.TrainMapper;
+import com.myproject.entity.Result;
+import com.myproject.mapper.TicketMapper;
 import com.myproject.service.TicketService;
+import com.myproject.util.AESUtil;
+import com.myproject.util.CurreetHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // 必须导入这个
-import java.util.Date;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @Service
 public class TicketServiceImpl implements TicketService {
 
     @Autowired
-    private TrainMapper trainMapper;
+    private TicketMapper ticketMapper;
 
-    @Autowired
-    private OrderMapper orderMapper;
-
-    /**
-     * 购票逻辑
-     * @Transactional: 开启事务。如果下面任何一步报错，所有操作回滚。
-     */
     @Override
-    @Transactional(rollbackFor = Exception.class) 
-    public void buyTicket(Integer trainId, Integer userId) {
-        // 1. 尝试扣减库存
-        // 如果返回0，说明没票了（被并发抢光了），抛出异常触发回滚
-        int rows = trainMapper.decreaseStock(trainId);
-        if (rows == 0) {
-            throw new RuntimeException("购票失败：余票不足");
+    public Result buy(TicketRequest req) {
+        Long userId = CurreetHolder.getCurrentId();
+        if (userId == null) {
+            return Result.error("用户未登录");
         }
 
-        // 2. 创建订单
-        Order order = new Order();
-        order.setTrainId(trainId);
-        order.setUserId(userId);
-        order.setCreateTime(new Date());
-        
-        // 插入订单到数据库
-        orderMapper.insert(order); 
-        
-        // 如果这里发生异常（比如数据库挂了），上面的库存扣减也会自动回滚恢复
-    }
+        // 身份证加密入库
+        String encryptedIdNumber = AESUtil.encrypt(req.getPassengerIdNumber());
 
-    /**
-     * 退票逻辑
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void refundTicket(Integer orderId) {
-        // 1. 查找订单
-        Order order = orderMapper.selectById(orderId);
-        if (order == null) {
-            throw new RuntimeException("订单不存在");
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("scheduleId", req.getScheduleId());
+        params.put("passengerName", req.getPassengerName());
+        params.put("passengerIdNumber", encryptedIdNumber);
+        params.put("carriageId", req.getCarriageId());
+        params.put("seatId", req.getSeatId());
+        params.put("fromStationId", req.getFromStationId());
+        params.put("toStationId", req.getToStationId());
+        params.put("ticketPrice", req.getTicketPrice());
+        params.put("seatType", req.getSeatType());
+        params.put("scheduleDate", java.sql.Date.valueOf(req.getScheduleDate()));
+
+        ticketMapper.bookTicket(params);
+
+        int resultCode = (int) params.get("resultCode");
+        String resultMsg = (String) params.get("resultMsg");
+
+        if (resultCode != 0) {
+            return Result.error(resultMsg);
         }
 
-        // 2. 删除或更新订单状态为已退票
-        orderMapper.deleteOrCancel(orderId);
-
-        // 3. 恢复库存
-        trainMapper.increaseStock(order.getTrainId());
+        Map<String, Object> data = new HashMap<>();
+        data.put("orderId", params.get("orderId"));
+        data.put("resultMsg", resultMsg);
+        return Result.success(data);
     }
 }

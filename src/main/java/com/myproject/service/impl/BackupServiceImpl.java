@@ -49,11 +49,12 @@ public class BackupServiceImpl implements BackupService {
 
         Path outputFile = backupsDir().resolve(fileName);
 
-        // mysqldump -u backup_operator -p123 --no-create-db --databases train_ticket_db --result-file=xxx.sql
+        // mysqldump -u backup_operator -p123 --default-character-set=utf8mb4 --no-create-db --databases train_ticket_db --result-file=xxx.sql
         ProcessBuilder pb = new ProcessBuilder(
                 mysqldumpPath(),
                 "-u", BACKUP_USER,
                 "-p" + BACKUP_PASS,
+                "--default-character-set=utf8mb4",
                 "--no-create-db", "--databases", DB_NAME,
                 "--result-file=" + outputFile.toAbsolutePath()
         );
@@ -110,10 +111,12 @@ public class BackupServiceImpl implements BackupService {
         }
 
         // 恢复用 root 账号（restore_operator 会有 LOCK TABLES/REFERENCES/SUPER 等权限坑，课程项目直接用 root）
+        // --default-character-set=utf8mb4 防止中文 COMMENT 乱码
         ProcessBuilder pb = new ProcessBuilder(
                 mysqlPath(),
                 "-u", dbUser,
                 "-p" + dbPassword,
+                "--default-character-set=utf8mb4",
                 DB_NAME);
         pb.redirectErrorStream(true);
         Process p = pb.start();

@@ -61,6 +61,8 @@ public class UserController {
         return Result.success(userList);
     }
 
+
+
     //注销账号
     @DeleteMapping("/delete")
     public Result delete(Long id){

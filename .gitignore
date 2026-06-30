@@ -22,3 +22,8 @@ Thumbs.db
 *.jar
 *.war
 memory.md
+.notes/
+
+backups/
+
+token.txt

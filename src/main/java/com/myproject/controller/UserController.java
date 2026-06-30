@@ -5,11 +5,12 @@ import com.myproject.entity.User;
 import com.myproject.service.UserService;
 
 import com.myproject.util.CurreetHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -53,6 +54,7 @@ public class UserController {
     public Result list(@RequestBody User user){
         String currentUserType = CurreetHolder.getCurrentUserType();
         if(!"ADMIN".equals(currentUserType)){
+            log.info(currentUserType);
             return Result.error("权限不足");
         }
         List<User> userList = userService.list(user);

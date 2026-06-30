@@ -10,8 +10,6 @@ import java.util.List;
 
 @Mapper
 public interface LogMapper {
-    @Insert("insert into audit_log() values ()")
-    void insert();
 
     @Update("SET @audit_operator = #{operatorId}")
     void setAuditOperator(@Param("operatorId") Long operatorId);

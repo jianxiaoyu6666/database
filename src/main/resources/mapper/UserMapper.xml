@@ -5,7 +5,7 @@
 <mapper namespace="com.myproject.mapper.UserMapper">
 
     <!-- 调用存储过程查询用户 -->
-    <select id="list" statementType="CALLABLE" resultMap="BaseResultMap">
+    <select id="list" statementType="CALLABLE" resultType="com.myproject.entity.User">
         {call sp_search_user(
                 #{username, mode=IN, jdbcType=VARCHAR},
                 #{realName, mode=IN, jdbcType=VARCHAR},

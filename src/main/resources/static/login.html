@@ -218,6 +218,19 @@
             <button type="submit">注册</button>
         </form>
 
+        <form id="profileForm">
+            <h2>个人信息</h2>
+            <label>新用户名</label>
+            <input name="username" placeholder="登录后可修改">
+            <label>新密码</label>
+            <input name="password" type="password" placeholder="必填">
+            <label>新手机号</label>
+            <input name="phone" placeholder="必填">
+            <label>邮箱</label>
+            <input name="email" type="email" placeholder="可选">
+            <button type="submit">更新信息</button>
+        </form>
+
         <button class="secondary" id="logoutButton" type="button">退出登录</button>
         <div class="message" id="authMessage"></div>
     </section>
@@ -226,6 +239,7 @@
         <div class="tabs">
             <button class="active" data-panel-tab="stats">窗口函数统计</button>
             <button data-panel-tab="backup">备份恢复</button>
+            <button data-panel-tab="users">用户管理</button>
         </div>
 
         <div id="statsPanel">
@@ -255,6 +269,44 @@
             <table id="backupTable"></table>
         </div>
 
+        <div id="usersPanel" class="hidden">
+            <h2>用户管理</h2>
+            <form id="userSearchForm">
+                <div class="grid">
+                    <div>
+                        <label>用户名</label>
+                        <input name="username">
+                    </div>
+                    <div>
+                        <label>真实姓名</label>
+                        <input name="realName">
+                    </div>
+                    <div>
+                        <label>用户类型</label>
+                        <select name="userType">
+                            <option value="">全部</option>
+                            <option value="ADMIN">管理员</option>
+                            <option value="STAFF">工作人员</option>
+                            <option value="USER">普通用户</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid">
+                    <div>
+                        <label>账号状态</label>
+                        <select name="status">
+                            <option value="">全部</option>
+                            <option value="1">正常</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                    <button type="submit">查询用户</button>
+                    <button type="button" class="secondary" id="clearUserSearch">清空条件</button>
+                </div>
+            </form>
+            <table id="userTable"></table>
+        </div>
+
         <div class="message" id="mainMessage"></div>
     </section>
 </main>
@@ -262,7 +314,10 @@
 <script>
     const state = {
         token: localStorage.getItem("token") || "",
-        username: localStorage.getItem("username") || ""
+        username: localStorage.getItem("username") || "",
+        id: localStorage.getItem("userId") || "",
+        userType: localStorage.getItem("userType") || "",
+        status: localStorage.getItem("status") || ""
     };
 
     const $ = (selector) => document.querySelector(selector);
@@ -275,6 +330,43 @@
 
     function updateUser() {
         $("#currentUser").textContent = state.username || "未登录";
+    }
+
+    function parseJwtPayload(token) {
+        if (!token || token.split(".").length < 2) {
+            return {};
+        }
+        try {
+            const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+            const padded = payload.padEnd(payload.length + (4 - payload.length % 4) % 4, "=");
+            return JSON.parse(decodeURIComponent(escape(atob(padded))));
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function syncLoginState(data) {
+        const claims = parseJwtPayload(data.token);
+        state.token = data.token;
+        state.username = data.username;
+        state.id = String(data.id || claims.id || "");
+        state.userType = claims.userType || "";
+        state.status = claims.status ?? "";
+        localStorage.setItem("token", state.token);
+        localStorage.setItem("username", state.username);
+        localStorage.setItem("userId", state.id);
+        localStorage.setItem("userType", state.userType);
+        localStorage.setItem("status", state.status);
+    }
+
+    function buildQuery(data) {
+        const params = new URLSearchParams();
+        Object.entries(data).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+                params.set(key, value);
+            }
+        });
+        return params.toString();
     }
 
     async function request(path, options = {}) {
@@ -295,6 +387,52 @@
 
     function formJson(form) {
         return Object.fromEntries(new FormData(form).entries());
+    }
+
+    function renderUserTable(rows) {
+        const table = $("#userTable");
+        if (!rows || rows.length === 0) {
+            table.innerHTML = "<tbody><tr><td>暂无用户</td></tr></tbody>";
+            $("#rowCount").textContent = "0";
+            return;
+        }
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>真实姓名</th>
+                    <th>类型</th>
+                    <th>状态</th>
+                    <th>邮箱</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows.map(user => `
+                    <tr>
+                        <td>${user.id ?? ""}</td>
+                        <td>${user.username ?? ""}</td>
+                        <td>${user.realName ?? ""}</td>
+                        <td>${user.userType ?? ""}</td>
+                        <td>${user.status === 1 ? "正常" : "禁用"}</td>
+                        <td>${user.email ?? ""}</td>
+                        <td><button type="button" class="danger" data-delete-user="${user.id}">删除</button></td>
+                    </tr>
+                `).join("")}
+            </tbody>
+        `;
+        $("#rowCount").textContent = rows.length;
+    }
+
+    async function loadUsers(filters = {}) {
+        const data = Object.fromEntries(
+            Object.entries(filters).map(([key, value]) => [key, value === "" ? null : value])
+        );
+        data.status = data.status === null || data.status === undefined ? null : Number(data.status);
+        const rows = await request("/api/users/list", {method: "POST", body: JSON.stringify(data)});
+        renderUserTable(rows);
+        setMessage($("#mainMessage"), "用户列表已更新");
     }
 
     function renderTable(table, rows) {
@@ -352,6 +490,7 @@
             button.classList.add("active");
             $("#statsPanel").classList.toggle("hidden", button.dataset.panelTab !== "stats");
             $("#backupPanel").classList.toggle("hidden", button.dataset.panelTab !== "backup");
+            $("#usersPanel").classList.toggle("hidden", button.dataset.panelTab !== "users");
         });
     });
 
@@ -359,10 +498,7 @@
         event.preventDefault();
         try {
             const data = await request("/login", {method: "POST", body: JSON.stringify(formJson(event.target))});
-            state.token = data.token;
-            state.username = data.username;
-            localStorage.setItem("token", state.token);
-            localStorage.setItem("username", state.username);
+            syncLoginState(data);
             updateUser();
             setMessage($("#authMessage"), "登录成功");
         } catch (error) {
@@ -383,10 +519,72 @@
     $("#logoutButton").addEventListener("click", () => {
         state.token = "";
         state.username = "";
+        state.id = "";
+        state.userType = "";
+        state.status = "";
         localStorage.removeItem("token");
         localStorage.removeItem("username");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userType");
+        localStorage.removeItem("status");
         updateUser();
         setMessage($("#authMessage"), "已退出登录");
+    });
+
+    $("#profileForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        if (!state.id) {
+            setMessage($("#authMessage"), "请先登录再修改信息", false);
+            return;
+        }
+        try {
+            const data = formJson(event.target);
+            const query = buildQuery(data);
+            await request(`/api/users/update/${encodeURIComponent(state.id)}?${query}`, {method: "POST"});
+            if (data.username) {
+                state.username = data.username;
+                localStorage.setItem("username", state.username);
+                updateUser();
+            }
+            event.target.reset();
+            setMessage($("#authMessage"), "信息更新成功");
+        } catch (error) {
+            setMessage($("#authMessage"), error.message, false);
+        }
+    });
+
+    $("#userSearchForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+            await loadUsers(formJson(event.target));
+        } catch (error) {
+            setMessage($("#mainMessage"), error.message, false);
+        }
+    });
+
+    $("#clearUserSearch").addEventListener("click", () => {
+        $("#userSearchForm").reset();
+        $("#userTable").innerHTML = "";
+        $("#rowCount").textContent = "0";
+        setMessage($("#mainMessage"), "筛选条件已清空");
+    });
+
+    $("#userTable").addEventListener("click", async event => {
+        const button = event.target.closest("[data-delete-user]");
+        if (!button) {
+            return;
+        }
+        const id = button.dataset.deleteUser;
+        if (!id || !confirm(`确认删除用户 ${id}？`)) {
+            return;
+        }
+        try {
+            await request(`/api/users/delete?id=${encodeURIComponent(id)}`, {method: "DELETE"});
+            await loadUsers(formJson($("#userSearchForm")));
+            setMessage($("#mainMessage"), "用户已删除");
+        } catch (error) {
+            setMessage($("#mainMessage"), error.message, false);
+        }
     });
 
     $$("[data-stat]").forEach(button => {

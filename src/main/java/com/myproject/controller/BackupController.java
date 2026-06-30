@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/backup")
+@RequestMapping("/api/admin/backups")
 public class BackupController {
 
     @Autowired
@@ -20,7 +20,7 @@ public class BackupController {
      * 手动触发全量备份
      * POST /api/backup/full
      */
-    @PostMapping("/full")
+    @PostMapping
     public Result fullBackup() {
         if (!"ADMIN".equals(CurreetHolder.getCurrentUserType())) {
             return Result.error("只有管理员可以执行备份操作");
@@ -37,7 +37,7 @@ public class BackupController {
      * 列出所有备份文件
      * GET /api/backup/files
      */
-    @GetMapping("/files")
+    @GetMapping
     public Result listFiles() {
         if (!"ADMIN".equals(CurreetHolder.getCurrentUserType())) {
             return Result.error("只有管理员可以查看备份列表");
@@ -54,14 +54,10 @@ public class BackupController {
      * 恢复数据库（需要确认参数防止误操作）
      * POST /api/backup/restore?fileName=xxx.sql&confirm=yes
      */
-    @PostMapping("/restore")
-    public Result restore(@RequestParam String fileName,
-                          @RequestParam(defaultValue = "no") String confirm) {
+    @PostMapping("/{fileName}/restore")
+    public Result restore(@PathVariable String fileName) {
         if (!"ADMIN".equals(CurreetHolder.getCurrentUserType())) {
             return Result.error("只有管理员可以执行恢复操作");
-        }
-        if (!"yes".equals(confirm)) {
-            return Result.error("恢复操作危险，请传 confirm=yes 确认");
         }
         try {
             backupService.restore(fileName);

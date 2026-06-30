@@ -1,8 +1,12 @@
 package com.myproject.controller;
 
+import com.myproject.entity.Result;
 import com.myproject.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/ticket")
@@ -12,18 +16,22 @@ public class TicketController {
     private TicketService ticketService;
 
     @PostMapping("/buy")
-    public String buy(@RequestParam Integer trainId, @RequestParam Integer userId) {
+    public Result buy(@RequestParam Integer trainId, @RequestParam Integer userId) {
         try {
             ticketService.buyTicket(trainId, userId);
-            return "购票成功";
+            return Result.success("购票成功");
         } catch (Exception e) {
-            return "购票失败: " + e.getMessage();
+            return Result.error("购票失败: " + e.getMessage());
         }
     }
-    
+
     @PostMapping("/refund")
-    public String refund(@RequestParam Integer orderId) {
-         ticketService.refundTicket(orderId);
-         return "退票成功";
+    public Result refund(@RequestParam Integer orderId) {
+        try {
+            ticketService.refundTicket(orderId);
+            return Result.success("退票成功");
+        } catch (Exception e) {
+            return Result.error("退票失败: " + e.getMessage());
+        }
     }
 }
